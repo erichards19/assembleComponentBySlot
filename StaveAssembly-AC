@@ -8,7 +8,7 @@ from getpass import getpass
 # Written by Xavier Chen and Ella Richards May 2026.
 # Finds IV scan results on local computer, pulls out module serial number to be matched with fuse ID from Autoconfig. Assembles modules by slot.
 
-folder = Path("/Desktop/itsdaq-sw/DAT/results/")  # Direct to the folder with the test results ("/Desktop/itsdaq-sw/DAT/results")
+folder = Path("/home/stavetesting/Desktop/itsdaq-sw/DAT/results/")  # Direct to the folder with the test results ("/home/stavetesting/Desktop/itsdaq-sw/DAT/results")
 output = dict()
 output["Successfully Assembled"] = []
 output["Failed to Assemble"] = []
