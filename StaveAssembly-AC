@@ -95,17 +95,17 @@ def assembleComponentBySlot(parent, output):
     try:
         for child in output["children"]:
             print("Assembling " + output["children"][child]["childSN"] + " in slot " + output["children"][child]["slot"] + "...")
-            # assembleChild = client.post("assembleComponentBySlot", json={
-            #     "parent": parent,
-            #     "child": output["children"][child]["childSN"],
-            #     "slot": output["children"][child]["slot"],
-            # })
-            # if assembleChild.get("success"):
-            #     output["Successfully Assembled" + output["children"][child]["childSN"] + " in slot " +
-            #            output["children"][child]["slot"]].append(assembleChild)
-            # else:
-            #     output["Failed to Assemble" + output["children"][child]["childSN"] + " in slot " +
-            #            output["children"][child]["slot"]].append(assembleChild)
+            assembleChild = client.post("assembleComponentBySlot", json={
+                "parent": parent,
+                "child": output["children"][child]["childSN"],
+                "slot": output["children"][child]["slot"],
+            })
+            if assembleChild.get("success"):
+                output["Successfully Assembled" + output["children"][child]["childSN"] + " in slot " +
+                       output["children"][child]["slot"]].append(assembleChild)
+            else:
+                output["Failed to Assemble" + output["children"][child]["childSN"] + " in slot " +
+                       output["children"][child]["slot"]].append(assembleChild)
         return output
     except Exception as e:
         output['errors'].append(str(e))
