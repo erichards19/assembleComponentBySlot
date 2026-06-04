@@ -99,126 +99,12 @@ def assembleComponentBySlot(parent, output):
                 assembleChild = client.post("assembleComponent", json={
                     "parent": parent,
                     "child": output["children"][child]["childSN"],
-                    "properties": [
-                        {
-                          "code": "SIDE",
-                          "name": "Stave Side",
-                          "value": "Main",
-                          "dataType": "string",
-                          "required": True
-                        },
-                        {
-                          "code": "POSITION",
-                          "name": "Position",
-                          "value": output["children"][child]["slot"],
-                          "dataType": "string",
-                          "required": True
-                        },
-                        {
-                          "code": "ASSEMBLER",
-                          "name": "Assembler Names",
-                          "value": None,
-                          "dataType": "string",
-                          "required": False
-                        },
-                        {
-                          "code": "CALIBRATION",
-                          "name": "Stage-to-Stave Calibration Timestamp",
-                          "value": None,
-                          "dataType": "string",
-                          "required": False
-                        },
-                        {
-                          "code": "GLUE-TIME",
-                          "name": "Gluing Timestamp",
-                          "value": None,
-                          "dataType": "string",
-                          "required": False
-                        },
-                        {
-                          "code": "GLUE-ID",
-                          "name": "Glue Batch Code",
-                          "value": None,
-                          "dataType": "string",
-                          "required": False
-                        },
-                        {
-                          "code": "GLUE",
-                          "name": "Glue type and mix",
-                          "value": None,
-                          "dataType": "string",
-                          "required": False
-                        },
-                        {
-                          "code": "GLUE_WEIGHT",
-                          "name": "Glue weight [g]",
-                          "dataType": "float",
-                          "required": False
-                        }
-                    ]
-                })
+                    "properties": {"SIDE": "Main", "POSITION": output["children"][child]["slot"], "ASSEMBLER": None, "CALIBRATION": None, "GLUE-TIME": None, "GLUE-ID": None, "GLUE": None}})
             else:
                 assembleChild = client.post("assembleComponent", json={
                     "parent": parent,
                     "child": output["children"][child]["childSN"],
-                    "properties": [
-                        {
-                            "code": "SIDE",
-                            "name": "Stave Side",
-                            "value": "Secondary",
-                            "dataType": "string",
-                            "required": True
-                        },
-                        {
-                            "code": "POSITION",
-                            "name": "Position",
-                            "value": str(int(output["children"][child]["slot"])-14),
-                            "dataType": "string",
-                            "required": True
-                        },
-                        {
-                            "code": "ASSEMBLER",
-                            "name": "Assembler Names",
-                            "value": None,
-                            "dataType": "string",
-                            "required": False
-                        },
-                        {
-                            "code": "CALIBRATION",
-                            "name": "Stage-to-Stave Calibration Timestamp",
-                            "value": None,
-                            "dataType": "string",
-                            "required": False
-                        },
-                        {
-                            "code": "GLUE-TIME",
-                            "name": "Gluing Timestamp",
-                            "value": None,
-                            "dataType": "string",
-                            "required": False
-                        },
-                        {
-                            "code": "GLUE-ID",
-                            "name": "Glue Batch Code",
-                            "value": None,
-                            "dataType": "string",
-                            "required": False
-                        },
-                        {
-                            "code": "GLUE",
-                            "name": "Glue type and mix",
-                            "value": None,
-                            "dataType": "string",
-                            "required": False
-                        },
-                        {
-                            "code": "GLUE_WEIGHT",
-                            "name": "Glue weight [g]",
-                            "dataType": "float",
-                            "required": False
-                        }
-                    ]
-                })
+                    "properties": {"SIDE": "Secondary", "POSITION": str(int(output["children"][child]["slot"])-14), "ASSEMBLER": None, "CALIBRATION": None, "GLUE-TIME": None, "GLUE-ID": None, "GLUE": None}})
             if assembleChild.get("success"):
                 output["Successfully Assembled" + output["children"][child]["childSN"] + " in slot " +
                        output["children"][child]["slot"]].append(assembleChild)
