@@ -1,0 +1,250 @@
+import re
+import itkdb
+import json
+from pathlib import Path
+from itkdb.core import User
+from getpass import getpass
+
+# Written by Xavier Chen and Ella Richards May 2026.
+# Finds IV scan results on local computer, pulls out module serial number to be matched with fuse ID from Autoconfig. Assembles modules by slot.
+
+folder = Path("/home/stavetesting/Desktop/itsdaq-sw/DAT/results/")  # Direct to the folder with the test results ("/home/stavetesting/Desktop/itsdaq-sw/DAT/results")
+output = dict()
+output["Successfully Assembled"] = []
+output["Failed to Assemble"] = []
+output["errors"] = []
+output["children"] = {}
+
+def MLlocator(folder):
+    RN = input("Stave Test Run Number (5-digit): ")  # Need to enter in the format "1234-5" or "1234_5".
+    if len(RN) == 6:
+        runNum = RN[:4] + "_" + RN[5]
+    elif len(RN) == 5:
+        runNum = RN[:4] + "_" + RN[4]
+    else:
+        output['errors'].append("Invalid run number format.")
+        return output
+    print("Run #", runNum)
+    data = []  # The list for test result json files.
+    MLSN = [None] * 28  # Module Serial Number list to be filled.
+
+    for file in folder.glob("*.json"):
+        if runNum + "_MODULE_IV_AMAC" in file.name:  # The criteria should be updated. Right now checks for "ML" (module) and "runNum" (run number).
+            with open(file, "r") as f:
+                data.append(json.load(f))  # Loading the json files in the list "data" (which is not properly ordered yet).
+
+    if len(data) == 0:
+        output['errors'].append("No IV scan files with such run number.")
+        return output
+    elif len(data) != 28:  # Check if there're 28 IV Scan Files
+        output['errors'].append("Expected exactly 28 files.")
+        return output
+
+    lines = []
+    print("Paste AMAC FuseIDs (then press enter twice):")
+
+    # Extracting position/sequence of modules installed through AMAC FuseIDs provided in AutoConfig'''
+    # probably not the best way, but there has to be some kind of manual input that informs position/sequence of modules'''
+    # the HCC Fuse IDs can also be used, but not with this code'''
+
+    while True:
+        line = input()
+        if line == "":
+            break
+        lines.append(line)
+    amacid = []
+    for line in lines:
+        match = re.search(r'([0-9a-z]{6})', line)
+        if match:
+            amacid.append(match.group(1))
+        else:
+            output['errors'].append(f"Could not extract Fuse ID from line:\n{line}")
+            return output
+
+    if len(amacid) != 28:  # Check if there're 28 AMAC FuseIDs from what is pasted.
+        output['errors'].append("Expected exactly 28 AMAC FuseIDs")
+        return output
+
+    # Match ordered AMAC FuseID with the Module SN
+    for i in range(28):
+        for j in range(28):
+            if str(amacid[i]) == str(data[j]["properties"]["det_info"]["AMAC_FuseID"]):
+                MLSN[i] = data[j]["component"]
+
+    for i in range(28):
+        output["children"]["Module #" + str(i)] = {"childSN": MLSN[i], "slot": str(i)}
+    return output
+
+def assembleComponentBySlot(parent, output):
+    # Check that parent exists, is a stave, and is in correct location
+    comp = client.get("getComponent", json={"component": parent})
+    if comp == None:
+        output['errors'].append('Stave does not exist')
+        return output
+    if comp["componentType"]["code"] != "STAVE":
+        output['errors'].append('Entered SN is not a stave')
+        return output
+    if comp["institution"]["code"] != "BNL":
+        output['errors'].append('Stave is not at BNL')
+        return output
+
+    # Assemble modules
+    if output["children"] == None:
+        output['errors'].append('Could not find modules to assemble')
+        return output
+    try:
+        for child in output["children"]:
+            print("Assembling " + output["children"][child]["childSN"] + " in slot " + output["children"][child]["slot"] + "...")
+            if int(output["children"][child]["slot"]) < 14:
+                assembleChild = client.post("assembleComponent", json={
+                    "parent": parent,
+                    "child": output["children"][child]["childSN"],
+                    "properties": [
+                        {
+                          "code": "SIDE",
+                          "name": "Stave Side",
+                          "value": "Main",
+                          "dataType": "string",
+                          "required": True
+                        },
+                        {
+                          "code": "POSITION",
+                          "name": "Position",
+                          "value": output["children"][child]["slot"],
+                          "dataType": "string",
+                          "required": True
+                        },
+                        {
+                          "code": "ASSEMBLER",
+                          "name": "Assembler Names",
+                          "value": None,
+                          "dataType": "string",
+                          "required": False
+                        },
+                        {
+                          "code": "CALIBRATION",
+                          "name": "Stage-to-Stave Calibration Timestamp",
+                          "value": None,
+                          "dataType": "string",
+                          "required": False
+                        },
+                        {
+                          "code": "GLUE-TIME",
+                          "name": "Gluing Timestamp",
+                          "value": None,
+                          "dataType": "string",
+                          "required": False
+                        },
+                        {
+                          "code": "GLUE-ID",
+                          "name": "Glue Batch Code",
+                          "value": None,
+                          "dataType": "string",
+                          "required": False
+                        },
+                        {
+                          "code": "GLUE",
+                          "name": "Glue type and mix",
+                          "value": None,
+                          "dataType": "string",
+                          "required": False
+                        },
+                        {
+                          "code": "GLUE_WEIGHT",
+                          "name": "Glue weight [g]",
+                          "dataType": "float",
+                          "required": False
+                        }
+                    ]
+                })
+            else:
+                assembleChild = client.post("assembleComponent", json={
+                    "parent": parent,
+                    "child": output["children"][child]["childSN"],
+                    "properties": [
+                        {
+                            "code": "SIDE",
+                            "name": "Stave Side",
+                            "value": "Secondary",
+                            "dataType": "string",
+                            "required": True
+                        },
+                        {
+                            "code": "POSITION",
+                            "name": "Position",
+                            "value": str(int(output["children"][child]["slot"])-14),
+                            "dataType": "string",
+                            "required": True
+                        },
+                        {
+                            "code": "ASSEMBLER",
+                            "name": "Assembler Names",
+                            "value": None,
+                            "dataType": "string",
+                            "required": False
+                        },
+                        {
+                            "code": "CALIBRATION",
+                            "name": "Stage-to-Stave Calibration Timestamp",
+                            "value": None,
+                            "dataType": "string",
+                            "required": False
+                        },
+                        {
+                            "code": "GLUE-TIME",
+                            "name": "Gluing Timestamp",
+                            "value": None,
+                            "dataType": "string",
+                            "required": False
+                        },
+                        {
+                            "code": "GLUE-ID",
+                            "name": "Glue Batch Code",
+                            "value": None,
+                            "dataType": "string",
+                            "required": False
+                        },
+                        {
+                            "code": "GLUE",
+                            "name": "Glue type and mix",
+                            "value": None,
+                            "dataType": "string",
+                            "required": False
+                        },
+                        {
+                            "code": "GLUE_WEIGHT",
+                            "name": "Glue weight [g]",
+                            "dataType": "float",
+                            "required": False
+                        }
+                    ]
+                })
+            if assembleChild.get("success"):
+                output["Successfully Assembled" + output["children"][child]["childSN"] + " in slot " +
+                       output["children"][child]["slot"]].append(assembleChild)
+            else:
+                output["Failed to Assemble" + output["children"][child]["childSN"] + " in slot " +
+                       output["children"][child]["slot"]].append(assembleChild)
+        return output
+    except Exception as e:
+        output['errors'].append(str(e))
+        return output
+
+
+access_code1 = getpass("Access Code 1: ")
+access_code2 = getpass("Access Code 2: ")
+client = itkdb.Client()
+client.user = User(access_code1=access_code1,access_code2=access_code2)
+
+try:
+    client.user.authenticate()
+    print("Authentication successful.")
+except Exception as e:
+    print("Authentication failed.")
+    print(e)
+
+parent = input("Enter stave SN: ")
+assemblyOutput = assembleComponentBySlot(parent, MLlocator(folder))
+print("Successfully Assembled: " + str(assemblyOutput["Successfully Assembled"]))
+print("Failed to Assemble: " + str(assemblyOutput["Failed to Assemble"]))
+print("Errors: " + str(assemblyOutput["errors"]))
