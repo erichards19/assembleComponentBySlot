@@ -36,7 +36,7 @@ def MLlocator(folder):
                 if len(test) == 28: # Check if there are exactly 28 IV Scan Files.
                     break
                 elif len(test) == 0:
-                    print("Error: No IV scan files with such run number.")
+                    print("Error: No IV scan files with such run number. Check run number and folder path.")
                 else:
                     print("Error: Expected exactly 28 files.")
             elif len(RN) == 5:
@@ -128,6 +128,7 @@ def assembleComponent(parent, core, output, client):
     # Verify through database if core and modules are assembled in the correct positions, then print results
     getStave = client.get("getComponent", json={"component": parent, "alternativeIdentifier": False, "state": "ready",
                                                     "outputType": "full", "noTests": False, "noEosToken": True})
+    output["staveCode"] = getStave["code"]
     for children in getStave["children"]:
         if children["componentType"]["code"] == "CORE_STAVE":
             if children["component"]["serialNumber"] == core:
@@ -182,7 +183,7 @@ def getToken():
     return client
 
 # Verify stave and core serial numbers before assembly.
-def getStave(client):
+def askStave(client):
     stave = None
     while True:
         try:
@@ -210,7 +211,7 @@ def getStave(client):
 
 # Run
 client = getToken()
-StaveCoreSN = getStave(client)
+StaveCoreSN = askStave(client)
 assemblyOutput = assembleComponent(StaveCoreSN[0], StaveCoreSN[1], MLlocator(folder), client)
 
 # Print results
@@ -219,5 +220,7 @@ for line in assemblyOutput["Success"]:
 if len(assemblyOutput["Failure"]) != 0:
     for line in assemblyOutput["Failure"]:
         print(line + ".")
+print("Link to stave on database:")
+print("https://itkpd.unicornuniversity.net/componentView?code="+assemblyOutput["staveCode"])
 if len(assemblyOutput["errors"]) != 0:
     print("Errors: " + str(assemblyOutput["errors"]))
