@@ -3,6 +3,7 @@ import os
 import itkdb
 from itkdb.core import User
 from pathlib import Path
+from getpass import getpass
 
 runNumFolder = Path("/home/stavetesting/Desktop/itsdaq-sw/DAT/etc")
 logpath = Path("/home/stavetesting/Desktop/itsdaq-sw/DAT/logs")
