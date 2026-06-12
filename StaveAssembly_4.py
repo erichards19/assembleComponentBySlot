@@ -34,7 +34,6 @@ def finditsdaqLog(path):
                     latest_file = itsdaqLog
     return latest_file
 
-
 def findAMACIDs(file):
     amacID_pattern = re.compile(r"^AMAC\(\d+\) fuse_id [a-z0-9]+:$")
     amacid = []
@@ -57,7 +56,6 @@ def findAMACIDs(file):
     print("Found all 28 AMAC Fuse IDs.")
     return amacid
 
-
 def extractJson(runNum, folder):
     tst = []
     for file in folder.glob("*.json"):
@@ -66,7 +64,6 @@ def extractJson(runNum, folder):
                 tst.append(
                     json.load(f))  # Loading the json files in the list "tst" (which is not properly ordered yet).
     return tst
-
 
 def MLlocator(folder, amacid):
     while True:
@@ -110,7 +107,6 @@ def MLlocator(folder, amacid):
         output["children"]["Module #" + str(i)] = {"childSN": MLSN[i], "slot": str(i)}
     print("Successfully matched all modules.")
     return output
-
 
 def assembleComponent(parent, core, output, client):
     # Assemble Core
@@ -215,7 +211,6 @@ def assembleComponent(parent, core, output, client):
                 output["children"]["Module #" + str(i)]["slot"])
     return output
 
-
 def getToken():
     while True:
         access_code1 = getpass("Access Code 1: ")
@@ -229,7 +224,6 @@ def getToken():
         except:
             print("Authentication failed.")
     return client
-
 
 # Verify stave and core serial numbers before assembly.
 def askStave(client):
@@ -257,7 +251,6 @@ def askStave(client):
     else:
         core = input("Enter CORE Stave Serial Number:")
     return parent, core
-
 
 def lpgbtReport(runNum, folder):
     for file in folder.glob("*.json"):
