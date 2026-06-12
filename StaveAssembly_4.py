@@ -119,8 +119,7 @@ def assembleComponent(parent, core, output, client):
         assembleCore = client.post("assembleComponent", json={
             "parent": parent,
             "child": core,
-            "properties": None
-        })
+            "properties": None})
         output["errors"].append(assembleCore)
     except Exception as e:
         output['errors'].append(str(e))
@@ -151,16 +150,25 @@ def assembleComponent(parent, core, output, client):
             output['errors'].append(str(e))
 
     # Assembly EoS cards
-    print("Assembling EoS cards ...")
-    eosSN = lpgbtReport(output["runNum"], logpath)
-    assembleEoS1 = client.post("assembleComponent", json={
-        "parent": parent,
-        "child": eosSN[0],
-        "properties": {"SIDE": "Main"}})
-    assembleEoS2 = client.post("assembleComponent", json={
-        "parent": parent,
-        "child": eosSN[1],
-        "properties": {"SIDE": "Secondary"}})
+    try:
+        print("Assembling first EoS card ...")
+        eosSN = lpgbtReport(output["runNum"][:4], logpath)
+        assembleEoS1 = client.post("assembleComponent", json={
+            "parent": parent,
+            "child": eosSN[0],
+            "properties": {"SIDE": "Main"}})
+        output["errors"].append(assembleEoS1)
+    except Exception as e:
+        output['errors'].append(str(e))
+    try:
+        print("Assembling second EoS card ...")
+        assembleEoS2 = client.post("assembleComponent", json={
+            "parent": parent,
+            "child": eosSN[1],
+            "properties": {"SIDE": "Secondary"}})
+        output["errors"].append(assembleEoS2)
+    except Exception as e:
+        output['errors'].append(str(e))
 
     # Verify through database if core, modules, and EoS cards are assembled in the correct positions, then print results
     getStave = client.get("getComponent", json={"component": parent, "alternativeIdentifier": False, "state": "ready",
